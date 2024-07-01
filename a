@@ -1,0 +1,130 @@
+#include<windows.h>
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#include <cmath>
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+
+/** Indentificador Textura**/
+GLuint texture;
+float red[]={255.0f/255.0f,0.0f/255.0f,0.0f/255.0f} , skyblue[]={51.0f/255.0f,255.0f/255.0f,240.0f/255.0f}, orange[]={255.0f/255.0f,153.0f/255.0f,51.0f/255.0f}, green[]={51.0f/255.0f,255.0f/255.0f,0.0f/255.0f};
+float pink[]={255.0f/255.0f,192.0f/255.0f,203.0f/255.0f}, yellow[]={255.0f/255.0f,255.0f/255.0f,0.0f/255.0f},purple[]={127.0f/255.0f,0.0f/255.0f,255.0f/255.0f}, black[]={0.0f/255.0f,0.0f/255.0f,0.0f/255.0f}, white[]={255.0f/255.0f,255.0f/255.0f,255.0f/255.0f};
+
+
+void inicio(){
+    glClearColor(1, 1, 1, 1);
+
+glMatrixMode(GL_MODELVIEW);
+gluOrtho2D(-10,10,-10,10);
+}
+GLuint loadBMP(const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        printf("Error: No se pudo abrir el archivo de imagen.\n");
+        return 0;
+    }
+
+    unsigned char header[54];
+    fread(header, 1, 54, file);
+
+    unsigned int dataPos = *(int*)&(header[0x0A]);
+    unsigned int imageSize = *(int*)&(header[0x22]);
+    unsigned int width = *(int*)&(header[0x12]);
+    unsigned int height = *(int*)&(header[0x16]);
+
+    if (imageSize == 0) imageSize = width * height * 3;
+    if (dataPos == 0) dataPos = 54;
+
+    unsigned char* data = new unsigned char[imageSize];
+    fread(data, 1, imageSize, file);
+    fclose(file);
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    delete[] data;
+
+    return textureID;
+}
+
+
+void cuadrado(float x,float y, float lado, float rotacion, float *rgbcolor)
+{
+glTranslatef(x,y,0);
+glRotatef(rotacion,0,0,1);
+
+    glBegin(GL_QUADS);
+    glColor3fv(rgbcolor);
+    glVertex2d(0,0);
+    glVertex2d(lado,0);
+    glVertex2d(lado,lado);
+    glVertex2d(0,lado);
+    glEnd();
+glRotatef(-rotacion,0,0,1);
+glTranslatef(-x,-y,0);
+}
+
+
+static void display(void)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glBegin(GL_QUADS);
+        glColor3f(1,1,1);
+        glTexCoord2f(0,0); glVertex3f(-0.5,-0.5,0);
+        glTexCoord2f(10,0); glVertex3f(0.5,-0.5,0);
+        glTexCoord2f(10,10); glVertex3f(0.5,0.5,0);
+        glTexCoord2f(0,10); glVertex3f(-0.5,0.5,0);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+
+    glutSwapBuffers();
+}
+
+
+
+
+
+/* Program entry point */
+
+int main(int argc, char *argv[])
+{
+    glutInit(&argc, argv);
+    glutInitWindowSize(640, 480);
+    glutInitWindowPosition(10, 10);
+    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+
+    glutCreateWindow("GLUT Coordinate Axes");
+    inicio();
+    glutDisplayFunc(display);
+
+
+
+
+    // Cargar la imagen
+    texture = loadBMP("C:/Users/john/Documents/prueba/practica/pasto1.bmp");
+    if(!texture){
+        printf("No se cargo la imagen...!");
+        return EXIT_FAILURE;
+    }
+
+    glutMainLoop();
+
+    return 0;
+}
